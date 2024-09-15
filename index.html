@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scratch Card Demo</title>
+<style>
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: white; /* Midnight Blue */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    user-select: none;
+}
+
+#scratch-card {
+    position: relative;
+    width: 370px;
+    height: 370px;
+    aspect-ratio: square;
+    border: 2px solid #ecf0f1; /* Light Gray */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    background-color: #ecf0f1; /* Light Gray */
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+#scratch-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#scratch-card canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+</style>
+</head>
+<body>
+
+<div id="scratch-card">
+    <img src="./gpay.png" alt="Hidden Image">
+    <canvas></canvas>
+</div>
+
+<script>
+const scratchCard = document.getElementById('scratch-card');
+const canvas = scratchCard.querySelector('canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = scratchCard.offsetWidth;
+canvas.height = scratchCard.offsetHeight;
+
+// Fill the canvas with a gradient similar to Google Pay scratch color
+const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+gradient.addColorStop(0, '#4285f4'); // Medium Blue
+gradient.addColorStop(1, '#206dd9'); // Dark Blue
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// Draw the text
+ctx.fillStyle = '#fff';
+ctx.font = '24px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('Scratch here for #update', canvas.width / 2, canvas.height / 2);
+
+let isDrawing = false;
+let isMouseDown = false;
+
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+        y: (e.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+    };
+}
+
+function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+        x: (touch.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+        y: (touch.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+    };
+}
+
+canvas.addEventListener('mousedown', function(e) {
+    isDrawing = true;
+    isMouseDown = true;
+    const pos = getMousePos(e);
+    scratch(pos.x, pos.y);
+});
+
+canvas.addEventListener('mousemove', function(e) {
+    if (isDrawing && isMouseDown) {
+        const pos = getMousePos(e);
+        scratch(pos.x, pos.y);
+    }
+});
+
+canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (isDrawing) {
+        const pos = getTouchPos(e);
+        scratch(pos.x, pos.y);
+    }
+});
+
+canvas.addEventListener('mouseup', function(e) {
+    isDrawing = false;
+    isMouseDown = false;
+});
+
+canvas.addEventListener('mouseleave', function(e) {
+    isDrawing = false;
+});
+
+canvas.addEventListener('mouseenter', function(e) {
+    if (isMouseDown) {
+        isDrawing = true;
+    }
+});
+
+// Listen for mouseup outside the canvas
+document.addEventListener('mouseup', function(e) {
+    isMouseDown = false;
+});
+
+// Touch events
+canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    isDrawing = true;
+    const pos = getTouchPos(e);
+    scratch(pos.x, pos.y);
+});
+
+canvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    isDrawing = false;
+});
+
+function scratch(x, y) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, 50, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+</script>
+
+</body>
+</html>
